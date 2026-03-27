@@ -1,23 +1,29 @@
-# Базовый образ
-FROM ubuntu:22.04
+FROM ubuntu:20.04
 
-# Отключаем интерактивные вопросы во время установки (DEBIAN_FRONTEND=noninteractive)
+# Отключаем интерактивные вопросы во время установки
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Устанавливаем всё сразу: пинги, керл, перф, тсидамп, веб-сервер, ssh
+# Устанавливаем необходимое
 RUN apt-get update && apt-get install -y \
-    iputils-ping \
-    curl \
-    iperf3 \
-    tcpdump \
-    net-tools \
     apache2 \
     openssh-server \
-    iperf3 \
+    netcat \
+    tcpdump \
+    curl \
+    iputils-ping \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Создаем папку для данных
-RUN mkdir -p /data
+# Создаем папку для данных (монтируется как volume)
+WORKDIR /data
 
-# Задаем команду запуска (чтобы контейнер не падал)
-CMD tail -f /dev/null
+# Настраиваем SSH (быстрая настройка для демо)
+RUN mkdir /var/run/sshd
+RUN echo 'root:password' | chpasswd
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+# SSH keys fix
+RUN ssh-keygen -A
+
+CMD ["/bin/bash"]
