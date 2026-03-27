@@ -1,29 +1,18 @@
-FROM ubuntu:20.04
+# Используем легковесный образ Python
+FROM python:3.10-slim
 
-# Отключаем интерактивные вопросы во время установки
-ENV DEBIAN_FRONTEND=noninteractive
+# Устанавливаем системные зависимости, если нужны (например, для gcc)
+RUN apt-get update && apt-get install -y gcc
 
-# Устанавливаем необходимое
-RUN apt-get update && apt-get install -y \
-    apache2 \
-    openssh-server \
-    netcat \
-    tcpdump \
-    curl \
-    iputils-ping \
-    python3 \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/*
+# Рабочая директория
+WORKDIR /app
 
-# Создаем папку для данных (монтируется как volume)
-WORKDIR /data
+# Копируем файл с зависимостями
+COPY requirements.txt .
 
-# Настраиваем SSH (быстрая настройка для демо)
-RUN mkdir /var/run/sshd
-RUN echo 'root:password' | chpasswd
-RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+# Устанавливаем библиотеки
+# sdv поставит tensorflow/torch, это займет время при сборке
+RUN pip install --no-cache-dir -r requirements.txt
 
-# SSH keys fix
-RUN ssh-keygen -A
-
-CMD ["/bin/bash"]
+# По умолчанию запускаем bash, чтобы мы могли зайти внутрь
+CMD ["bash"]
